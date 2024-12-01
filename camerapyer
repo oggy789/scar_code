@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photo Capture</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 20px;
+        }
+        video, canvas {
+            max-width: 100%;
+            border: 1px solid #ccc;
+            margin: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <h1>Photo Capture and Send</h1>
+    <video id="video" autoplay></video>
+    <canvas id="canvas" style="display:none;"></canvas>
+    <br>
+    <button id="capture">Capture Photo</button>
+    <button id="send" disabled>Send Photo</button>
+
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const captureButton = document.getElementById('capture');
+        const sendButton = document.getElementById('send');
+        const webhookUrl = 'https://emailhook.site/33d14867-ab99-4907-8178-63b7718d8232';
+
+        // Access webcam
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                video.srcObject = stream;
+            })
+            .catch(err => console.error("Error accessing webcam: ", err));
+
+        // Capture photo
+        captureButton.addEventListener('click', () => {
+            const context = canvas.getContext('2d');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            sendButton.disabled = false;
+            alert('Photo captured!');
+        });
+
+        // Send photo to webhook
+        sendButton.addEventListener('click', () => {
+            canvas.toBlob(blob => {
+                const formData = new FormData();
+                formData.append('file', blob, 'photo.jpg');
+
+                fetch(webhookUrl, {
+                    method: 'POST',
+                    body: formData,
+                })
+                .then(response => {
+                    if (response.ok) {
+                        alert('Photo sent successfully!');
+                    } else {
+                        alert('Failed to send photo.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error sending photo:', error);
+                    alert('Error occurred while sending the photo.');
+                });
+            }, 'image/jpeg');
+        });
+    </script>
+</body>
+</html>
+
